@@ -21,10 +21,10 @@ Initialement, nous avions prévu d'héberger notre modèle d'IA dans WatsonX, ma
 Une fois que notre IA de prédiction de consommation électrique d'une requête a prédit la consommation de la requête, on mets cette consommation dans la formule ci dessous pour obtenir l'empreinte carbone de cette requête.
 
 $$
-\text{Empreinte\_carbone\_de\_la\_requête} =
-\text{Energie\_consommée\_par\_la\_requête} \times 
-\text{Empreinte\_carbone\_d'un\_kWh} +
-\frac{\text{Empreinte\_carbone\_de\_l\_entrainement\_du\_modèle}}{\text{Nombre\_moyen\_de\_requêtes}}
+\text{Empreinte_carbone_de_la_requête} =
+\text{Energie_consommée_par_la_requête} \times 
+\text{Empreinte_carbone_d'un_kWh} +
+\frac{\text{Empreinte_carbone_de_l_entrainement_du_modèle}}{\text{Nombre_moyen_de_requêtes}}
 $$
 
 Dans notre formule, nous avons choisi de prendre en compte le coût de l'entrainement du modèle. En effet, la majorité de l'empreinte carbone d'un modèle vient de son entrainement. Nos calculs étaient donc vains si nous ne prenions pas en compte ce paramètre.
