@@ -24,6 +24,8 @@ git clone https://github.com/<your-user>/<repo>.git
 
 # Move into the project folder
 cd <repo>
+# Launch the app with
+python web/app.py
 ```
 
 ---

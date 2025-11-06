@@ -1,0 +1,10 @@
+openai
+tiktoken
+spacy
+textstat
+nltk
+pandas
+numpy
+flask
+python-dotenv
+joblib

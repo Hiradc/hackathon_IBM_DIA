@@ -236,6 +236,48 @@
             margin-top: 0.5rem;
             text-align: center;
         }
+        /* Add to your existing CSS */
+        .carbon-info {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .carbon-info span {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .user-carbon {
+            justify-content: flex-end;
+        }
+
+        .ai-carbon {
+            justify-content: flex-start;
+        }
+
+        #carbon-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #333;
+            border-top: 1px solid #eee;
+        }
+
+        .carbon-total {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
 
 
         @media (max-width: 768px) {
@@ -343,96 +385,138 @@
                 console.log(`Added ${sender} message:`, text.substring(0, 50) + (text.length > 50 ? '...' : ''));
             }
 
-            // Function to handle sending messages
-            async function sendMessage() {
-                console.log('sendMessage() called');
+            function displayCarbonInfo(emissions, isUser) {
+            if (emissions === null) return;
 
-                const prompt = promptInput.value.trim();
-                console.log('Prompt:', prompt);
+            const sender = isUser ? 'user' : 'ai';
+            const container = document.createElement('div');
+            container.className = `carbon-info ${sender}-carbon`;
 
-                if (!prompt) {
-                    console.log('Empty prompt, returning');
-                    return;
-                }
+            // Convert kWh to CO2 equivalent (using average grid intensity)
+            const co2Equivalent = emissions * 0.4; // ~0.4kg CO2 per kWh (average)
 
-                // Disable input while waiting
-                sendButton.disabled = true;
-                promptInput.disabled = true;
-                console.log('UI disabled during processing');
+            container.innerHTML = `
+                <div class="carbon-indicator" title="${emissions.toFixed(3)} kWh">
+                    ${co2Equivalent < 0.01 ? '🌱' :
+                    co2Equivalent < 0.05 ? '🍃' :
+                    co2Equivalent < 0.1 ? '🌿' : '🌳'}
+                    <span>${co2Equivalent.toFixed(2)}g CO₂</span>
+                </div>
+            `;
 
-                try {
-                    // Add user message to chat immediately
-                    addMessage('user', prompt);
-                    promptInput.value = '';
+            return container;
+        }
 
-                    console.log('Preparing API request');
-                    const model = modelSelect.value;
-                    console.log('Selected model:', model);
+        function updateCarbonFooter(co2_emission_request, co2_emission_train_model_min) {
+            const footer = document.getElementById('carbon-footer') ||
+                        document.createElement('div');
+            footer.id = 'carbon-footer';
+            footer.innerHTML = `
+                <div class="carbon-total">
+                    🌍 Last Request Carbon Footprint: ${((co2_emission_request + co2_emission_train_model_min)*1000).toFixed(4)}g CO₂ = ${(co2_emission_request * 1000).toFixed(4)}g CO₂ (carbon footprint of the request) + ${(co2_emission_train_model_min * 1000).toFixed(4)}g CO₂ (training-related carbon footprint)
+                </div>
+            `;
 
-                    const startTime = Date.now();
-                    console.log('Making fetch request at:', new Date(startTime));
+            if (!document.getElementById('carbon-footer')) {
+                document.body.appendChild(footer);
+            }
+        }
+        function updateTokenCounters(newTokens) {
+            console.log('Updating token counters with:', newTokens);
 
-                    const response = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            prompt: prompt,
-                            model: model,
-                            temperature: 0.7
-                        })
-                    });
+            // Your existing token counting logic
+            const tokenCounter = document.getElementById('token-counter');
+            const sessionTokens = document.getElementById('session-tokens');
+            const dailyTokens = document.getElementById('daily-tokens');
 
-                    console.log('Received response after:', (Date.now() - startTime), 'ms');
-                    console.log('Response status:', response.status);
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    console.log('Parsed response data:', data);
-
-                    if (data.success) {
-                        console.log('Successful response received');
-                        addMessage('ai', data.response);
-
-                        // Update token counters if elements exist
-                        if (tokenCounter.textContent !== undefined) {
-                            const newTokens = data.tokens || 0;
-                            console.log('New tokens:', newTokens);
-                            const currentTokens = parseInt(tokenCounter.textContent) || 0;
-                            tokenCounter.textContent = currentTokens + newTokens;
-
-                            if (sessionTokens.textContent !== undefined) {
-                                sessionTokens.textContent = currentTokens + newTokens;
-                            }
-                            if (dailyTokens.textContent !== undefined) {
-                                dailyTokens.textContent = (parseInt(dailyTokens.textContent) || 0) + newTokens;
-                            }
-                        }
-
-                        // Update response time display if element exists
-                        const responseTimeElement = document.getElementById('response-time');
-                        if (responseTimeElement) {
-                            responseTimeElement.textContent =
-                                `Response time: ${data.duration.toFixed(2)}s`;
-                        }
-                    } else {
-                        console.error('Error in response:', data.error);
-                        addMessage('error', `Error: ${data.error}`);
-                    }
-                } catch (error) {
-                    console.error('Network error:', error);
-                    addMessage('error', `Error: ${error.message}`);
-                } finally {
-                    console.log('Re-enabling UI');
-                    sendButton.disabled = false;
-                    promptInput.disabled = false;
-                }
+            if (!tokenCounter || !sessionTokens || !dailyTokens) {
+                console.error('Token counter elements not found');
+                return;
             }
 
+            const currentTokens = parseInt(tokenCounter.textContent) || 0;
+            tokenCounter.textContent = currentTokens + newTokens;
+            sessionTokens.textContent = currentTokens + newTokens;
+            dailyTokens.textContent = (parseInt(dailyTokens.textContent) || 0) + newTokens;
+        }
+
+            // Function to handle sending messages
+            async function sendMessage() {
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) return;
+
+    // Disable UI during processing
+    sendButton.disabled = true;
+    promptInput.disabled = true;
+
+    try {
+        // 1. Add user message
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'message user-message';
+        userMessageDiv.innerHTML = `
+            ${prompt.replace(/\n/g, '<br>')}
+            <div class="message-time">${new Date().toLocaleTimeString([], {
+                hour: '2-digit', minute: '2-digit'
+            })}</div>
+        `;
+        chatMessages.appendChild(userMessageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // 2. Send request to API
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: prompt,
+                model: modelSelect.value,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        // 3. Update token counters (this was missing)
+        if (data.tokens) {
+            updateTokenCounters(data.tokens);
+        }
+
+        // 4. Add AI response
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.className = 'message ai-message';
+        aiMessageDiv.innerHTML = `
+            ${data.response.replace(/\n/g, '<br>')}
+            <div class="message-time">${new Date().toLocaleTimeString([], {
+                hour: '2-digit', minute: '2-digit'
+            })}</div>
+        `;
+        chatMessages.appendChild(aiMessageDiv);
+
+        // 5. Add carbon information for both messages
+        if (data.co2_emission_request !== null) {
+            displayCarbonInfo(data.co2_emission_request, true, userMessageDiv);
+        }
+
+        if (data.co2_emission_train_model_min !== null) {
+            displayCarbonInfo(data.co2_emission_train_model_min, false, aiMessageDiv);
+        }
+
+        // 6. Update carbon footer
+        updateCarbonFooter(data.co2_emission_request, data.co2_emission_train_model_min);
+
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('error', `Error: ${error.message}`);
+    } finally {
+        // Re-enable UI
+        sendButton.disabled = false;
+        promptInput.disabled = false;
+        promptInput.value = '';
+        promptInput.focus();
+    }
+}
             // Event listeners
             sendButton.addEventListener('click', sendMessage);
 
@@ -442,26 +526,6 @@
                     sendMessage();
                 }
             });
-
-            // Test the backend connection when page loads
-            async function testBackend() {
-                try {
-                    const response = await fetch('/api/test');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const data = await response.json();
-                    console.log('Backend test result:', data);
-                    return data.status === 'success';
-                } catch (error) {
-                    console.error('Backend test failed:', error);
-                    addMessage('error', `Backend connection failed: ${error.message}`);
-                    return false;
-                }
-            }
-
-            // Run backend test
-            testBackend();
         });
 
     </script>
