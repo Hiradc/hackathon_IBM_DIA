@@ -101,6 +101,8 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
 import markdown
+load_dotenv()
+import os
 
 # ============================================================================
 # CONFIGURATION DU CLIENT API
@@ -115,7 +117,7 @@ client = OpenAI(
     
     # Clé API personnelle pour authentifier les requêtes
     # ⚠️ ATTENTION : Cette clé doit rester confidentielle !
-    api_key="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"
+    api_key=os.getenv("API_KEY")
 )
 
 # ============================================================================
