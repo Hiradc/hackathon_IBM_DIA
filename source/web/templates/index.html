@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackaton Chat Interface</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --light-gray: #e0e0e0;
+            --chat-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 0.8rem;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            gap: 1rem;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--chat-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .gemini-message {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.3rem;
+            text-align: right;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--light-gray);
+            background-color: white;
+        }
+
+        #prompt-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 24px;
+            outline: none;
+            resize: none;
+            min-height: 48px;
+            max-height: 120px;
+            font-size: 1rem;
+        }
+
+        #send-button {
+            margin-left: 0.5rem;
+            padding: 0 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        #send-button:hover {
+            background-color: #3367d6;
+        }
+
+        #send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--chat-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .token-counter {
+            background-color: var(--light-gray);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .token-counter h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .token-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .history {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .history h3 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .history-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--light-gray);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .history-item:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .model-selector {
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+        }
+
+        .model-selector label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .model-selector select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Add this for response time display */
+        #response-time {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        /* Add to your existing CSS */
+        .carbon-info {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .carbon-info span {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .user-carbon {
+            justify-content: flex-end;
+        }
+
+        .ai-carbon {
+            justify-content: flex-start;
+        }
+
+        #carbon-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #333;
+            border-top: 1px solid #eee;
+        }
+
+        .carbon-total {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+
+
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                order: -1;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">H</div>
+            <span>Hackaton Chat</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will appear here -->
+                <div class="message gemini-message">
+                    Hello! How can I help you today?
+                    <div class="message-time">Just now</div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <textarea id="prompt-input" placeholder="Type your message here..." rows="1"></textarea>
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="token-counter">
+                <h3>Tokens Used</h3>
+                <div class="token-value" id="token-counter">0</div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div>Session: <span id="session-tokens">0</span></div>
+                    <div>Daily: <span id="daily-tokens">0</span></div>
+                </div>
+            </div>
+
+            <div class="model-selector">
+                <label for="model-select">Model:</label>
+                <select id="model-select">
+                    {% for model in models %}
+                    <option value="{{ model }}" {% if model == 'google/gemini-2.5-flash' %}selected{% endif %}>
+                        {{ model.split('/')[-1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const promptInput = document.getElementById('prompt-input');
+            const sendButton = document.getElementById('send-button');
+            const modelSelect = document.getElementById('model-select');
+            const tokenCounter = document.getElementById('token-counter') || { textContent: '0' };
+            const sessionTokens = document.getElementById('session-tokens') || { textContent: '0' };
+            const dailyTokens = document.getElementById('daily-tokens') || { textContent: '0' };
+
+            // Initialize token counters if elements exist
+            if (tokenCounter.textContent === '') tokenCounter.textContent = '0';
+            if (sessionTokens.textContent === '') sessionTokens.textContent = '0';
+            if (dailyTokens.textContent === '') dailyTokens.textContent = '0';
+
+            // Function to add a message to the chat
+            function addMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(sender + '-message');
+
+                // Format the text with line breaks
+                const formattedText = text.replace(/\n/g, '<br>');
+
+                // Create timestamp
+                const timestamp = new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                messageDiv.innerHTML = `
+                    ${formattedText}
+                    <div class="message-time">${timestamp}</div>
+                `;
+
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                console.log(`Added ${sender} message:`, text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+            }
+
+            function displayCarbonInfo(emissions, isUser) {
+            if (emissions === null) return;
+
+            const sender = isUser ? 'user' : 'ai';
+            const container = document.createElement('div');
+            container.className = `carbon-info ${sender}-carbon`;
+
+            // Convert kWh to CO2 equivalent (using average grid intensity)
+            const co2Equivalent = emissions * 0.4; // ~0.4kg CO2 per kWh (average)
+
+            container.innerHTML = `
+                <div class="carbon-indicator" title="${emissions.toFixed(3)} kWh">
+                    ${co2Equivalent < 0.01 ? '🌱' :
+                    co2Equivalent < 0.05 ? '🍃' :
+                    co2Equivalent < 0.1 ? '🌿' : '🌳'}
+                    <span>${co2Equivalent.toFixed(2)}g CO₂</span>
+                </div>
+            `;
+
+            return container;
+        }
+
+        function updateCarbonFooter(co2_emission_request, co2_emission_train_model_min) {
+            const footer = document.getElementById('carbon-footer') ||
+                        document.createElement('div');
+            footer.id = 'carbon-footer';
+            footer.innerHTML = `
+                <div class="carbon-total">
+                    🌍 Last Request Carbon Footprint: ${((co2_emission_request + co2_emission_train_model_min)*1000).toFixed(4)}g CO₂ = ${(co2_emission_request * 1000).toFixed(4)}g CO₂ (carbon footprint of the request) + ${(co2_emission_train_model_min * 1000).toFixed(4)}g CO₂ (training-related carbon footprint)
+                </div>
+            `;
+
+            if (!document.getElementById('carbon-footer')) {
+                document.body.appendChild(footer);
+            }
+        }
+        function updateTokenCounters(newTokens) {
+            console.log('Updating token counters with:', newTokens);
+
+            // Your existing token counting logic
+            const tokenCounter = document.getElementById('token-counter');
+            const sessionTokens = document.getElementById('session-tokens');
+            const dailyTokens = document.getElementById('daily-tokens');
+
+            if (!tokenCounter || !sessionTokens || !dailyTokens) {
+                console.error('Token counter elements not found');
+                return;
+            }
+
+            const currentTokens = parseInt(tokenCounter.textContent) || 0;
+            tokenCounter.textContent = currentTokens + newTokens;
+            sessionTokens.textContent = currentTokens + newTokens;
+            dailyTokens.textContent = (parseInt(dailyTokens.textContent) || 0) + newTokens;
+        }
+
+            // Function to handle sending messages
+            async function sendMessage() {
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) return;
+
+    // Disable UI during processing
+    sendButton.disabled = true;
+    promptInput.disabled = true;
+
+    try {
+        // 1. Add user message
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'message user-message';
+        userMessageDiv.innerHTML = `
+            ${prompt.replace(/\n/g, '<br>')}
+            <div class="message-time">${new Date().toLocaleTimeString([], {
+                hour: '2-digit', minute: '2-digit'
+            })}</div>
+        `;
+        chatMessages.appendChild(userMessageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // 2. Send request to API
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: prompt,
+                model: modelSelect.value,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        // 3. Update token counters (this was missing)
+        if (data.tokens) {
+            updateTokenCounters(data.tokens);
+        }
+
+        // 4. Add AI response
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.className = 'message ai-message';
+        aiMessageDiv.innerHTML = `
+            ${data.response.replace(/\n/g, '<br>')}
+            <div class="message-time">${new Date().toLocaleTimeString([], {
+                hour: '2-digit', minute: '2-digit'
+            })}</div>
+        `;
+        chatMessages.appendChild(aiMessageDiv);
+
+        // 5. Add carbon information for both messages
+        if (data.co2_emission_request !== null) {
+            displayCarbonInfo(data.co2_emission_request, true, userMessageDiv);
+        }
+
+        if (data.co2_emission_train_model_min !== null) {
+            displayCarbonInfo(data.co2_emission_train_model_min, false, aiMessageDiv);
+        }
+
+        // 6. Update carbon footer
+        updateCarbonFooter(data.co2_emission_request, data.co2_emission_train_model_min);
+
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('error', `Error: ${error.message}`);
+    } finally {
+        // Re-enable UI
+        sendButton.disabled = false;
+        promptInput.disabled = false;
+        promptInput.value = '';
+        promptInput.focus();
+    }
+}
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+
+            promptInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
