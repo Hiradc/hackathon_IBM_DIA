@@ -53,5 +53,6 @@ Our plan was for the prompt to be sent to a LLM of the user's choice via the Ope
 
 The user can freely change between models, the total emission will still be tracked.
 
-
+To test the app, you will first need an OpenIA Api key and to list it as api_key = "[your key]" inside a .env folder placed in the source/web/ directory.
+Then you can access the app directory from your cmd on this github repo with | cd source | run the imports with | pip install -r requirements | and start the app with | python web/app.py |
 
