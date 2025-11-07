@@ -102,6 +102,7 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
+import markdown
 
 load_dotenv()
 
@@ -475,7 +476,7 @@ def chat():
     
     results = request_llm_co2_consumption(question, id_modele)
     return jsonify({
-        "response": results.loc[0, 'reponse'],
+        "response": markdown.markdown(results.loc[0, 'reponse']),
         "model": results.loc[0, 'modele_name'],
         "co2_emission_request": float(results.loc[0, 'co2_emission_request']),
         "co2_emission_train_model_min": float(results.loc[0, 'co2_emission_train_model_min']),

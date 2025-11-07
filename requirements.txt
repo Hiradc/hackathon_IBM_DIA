@@ -8,3 +8,5 @@ numpy
 flask
 python-dotenv
 joblib
+scikit-learn
+markdown
